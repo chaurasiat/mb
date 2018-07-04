@@ -100,10 +100,10 @@ def apply_sobel_operations(show_plots=False):
 
     # Choose a Sobel kernel size
     ksize = 17  # Choose a larger odd number to smooth gradient measurements
-    x_gradient_threshold = (20, 200)
-    y_gradient_threshold = (60, 100)
+    x_gradient_threshold = (50, 150)
+    y_gradient_threshold = (50, 150)
     direction_threshold = (0.6, 1.4)
-    magnitude_threshold = (70, 100)
+    magnitude_threshold = (70, 150)
 
     output_images=[]
 

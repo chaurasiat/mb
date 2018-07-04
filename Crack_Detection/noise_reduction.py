@@ -23,6 +23,7 @@ def apply_morphological_ops(sobel_output,kernel):
         erosion = cv2.erode(dilate, kernel2, iterations=4)
         closing = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
         opening = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
+        final = cv2.erode(closing, kernel2, iterations=1)
         f, (ax1, ax2,ax3,ax4,ax5,ax6) = plt.subplots(1, 6, figsize=(24, 7))
         f.tight_layout()
 
@@ -41,7 +42,7 @@ def apply_morphological_ops(sobel_output,kernel):
         ax5.imshow(closing, cmap='gray')
         ax5.set_title('closing', fontsize=25)
 
-        ax6.imshow(dilate, cmap='gray')
+        ax6.imshow(closing, cmap='gray')
         ax6.set_title('final', fontsize=25)
 
         x+=1
