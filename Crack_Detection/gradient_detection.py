@@ -96,14 +96,16 @@ def test_directions():
         plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
         plt.show()
 
-def get_combinations():
+def apply_sobel_operations(show_plots=False):
 
     # Choose a Sobel kernel size
-    ksize = 15  # Choose a larger odd number to smooth gradient measurements
+    ksize = 17  # Choose a larger odd number to smooth gradient measurements
     x_gradient_threshold = (20, 200)
     y_gradient_threshold = (60, 100)
     direction_threshold = (0.6, 1.4)
-    magnitude_threshold = (40, 100)
+    magnitude_threshold = (70, 100)
+
+    output_images=[]
 
     images = glob.glob('test_images/*.jpg')
     for fname in images:
@@ -117,62 +119,84 @@ def get_combinations():
         dir_binary = dir_threshold(image, sobel_kernel=ksize, thresh=direction_threshold)
 
         combined = np.zeros_like(dir_binary)
-        combined[(gradx == 1) & (dir_binary == 1)] = 1
+        #combined[(gradx == 1) & (dir_binary == 1)] = 1
         #combined[((gradx == 1) ) | ((dir_binary == 1) & (mag_binary==1))] = 1
-        #combined[((gradx == 1) & (grady==1)) | ((dir_binary == 1) & (mag_binary == 1))] = 1
+        #combined[((gradx == 1) | (grady==1)) | ((dir_binary == 1) & (mag_binary == 1))] = 1
+        combined[((gradx == 1) | (grady == 1))  & (mag_binary == 1)] = 1
 
-        # plot
-        f, (ax1, ax2, ax3, ax4, ax5 , ax6) = plt.subplots(1, 6, figsize=(24, 9))
-        f.tight_layout()
+        #plot
+        if show_plots == True:
+            f, (ax1, ax2, ax3, ax4, ax5 ) = plt.subplots(1, 5, figsize=(24, 9))
+            f.tight_layout()
 
-        ax1.imshow(image)
-        ax1.set_title('original', fontsize=25)
+            ax1.imshow(image)
+            ax1.set_title('original', fontsize=25)
 
-        ax2.imshow(gradx, cmap='gray')
-        ax2.set_title('gradx', fontsize=25)
+            ax2.imshow(gradx, cmap='gray')
+            ax2.set_title('gradx', fontsize=25)
 
-        ax3.imshow(mag_binary, cmap='gray')
-        ax3.set_title('mag', fontsize=25)
+            ax3.imshow(grady, cmap='gray')
+            ax3.set_title('grady', fontsize=25)
 
-        ax4.imshow(dir_binary, cmap='gray')
-        ax4.set_title('dir', fontsize=25)
+            ax4.imshow(mag_binary, cmap='gray')
+            ax4.set_title('mag', fontsize=25)
 
-        ax5.imshow(grady, cmap='gray')
-        ax5.set_title('grady', fontsize=25)
+            #ax4.imshow(dir_binary, cmap='gray')
+            #ax4.set_title('dir', fontsize=25)
 
-        ax6.imshow(combined, cmap='gray')
-        ax6.set_title('comb', fontsize=25)
+            ax5.imshow(combined, cmap='gray')
+            ax5.set_title('comb', fontsize=25)
 
-        plt.savefig('output_images/gradient_analysis/'+fname.split('\\')[1])
+            output_images.append(combined)
+
+            plt.savefig('output_images/gradient_analysis/'+fname.split('\\')[1])
         #plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
         plt.show()
 
-def get_grad_combined(image):
-    # Choose a Sobel kernel size
-    ksize = 15  # Choose a larger odd number to smooth gradient measurements
-    #gradient_threshold = (10, 100)
-    #direction_threshold = (0.65, 1.05)
-    #magnitude_threshold = (40, 100)
+    return output_images
 
-    x_gradient_threshold = (20, 200)
-    y_gradient_threshold = (60, 100)
-    direction_threshold = (0.5, 1.5)
-    magnitude_threshold = (40, 100)
+def apply_morphological_ops(sobel_output,kernel):
 
-    # Apply each of the thresholding functions
-    gradx = abs_sobel_thresh(image, orient='x', sobel_kernel=ksize, thresh_min=x_gradient_threshold[0],
-                             thresh_max=x_gradient_threshold[1])
-    grady = abs_sobel_thresh(image, orient='y', sobel_kernel=ksize, thresh_min=y_gradient_threshold[0],
-                             thresh_max=y_gradient_threshold[1])
+    #kernel = np.ones((5, 5), np.uint8)
+    #erosion = cv2.erode(img, kernel, iterations=1)
+    kernel2= np.ones((2,2), np.uint8)
 
-    mag_binary = mag_thresh(image, sobel_kernel=ksize, mag_thresh=magnitude_threshold)
-    dir_binary = dir_threshold(image, sobel_kernel=ksize, thresh=direction_threshold)
+    images = glob.glob('test_images/*.jpg')
+    orignal_images=[]
+    for fname in images:
+        image = mpimg.imread(fname)
+        orignal_images.append(image)
 
-    combined = np.zeros_like(dir_binary)
-    combined[ (gradx == 1) & (dir_binary == 1) ] = 1
-    #combined[((gradx == 1) & (grady == 1)) | ((dir_binary == 1) & (mag_binary == 1))] = 1
+    x=0
+    for image in sobel_output:
+        dilate = cv2.dilate(image,kernel,iterations = 1)
+        erosion = cv2.erode(dilate, kernel2, iterations=4)
+        closing = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
+        opening = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
+        f, (ax1, ax2,ax3,ax4,ax5,ax6) = plt.subplots(1, 6, figsize=(24, 7))
+        f.tight_layout()
 
-    return combined
+        ax1.imshow(orignal_images[x])
+        ax1.set_title('original', fontsize=25)
+
+        ax2.imshow(image, cmap='gray')
+        ax2.set_title('Sobel_output', fontsize=25)
+
+        ax3.imshow(erosion, cmap='gray')
+        ax3.set_title('erosion', fontsize=25)
+
+        ax4.imshow(dilate, cmap='gray')
+        ax4.set_title('dilate', fontsize=25)
+
+        ax5.imshow(closing, cmap='gray')
+        ax5.set_title('closing', fontsize=25)
+
+        ax6.imshow(dilate, cmap='gray')
+        ax6.set_title('final', fontsize=25)
+
+        x+=1
+
+        plt.show()
 
 #test_gradients()
 #test_directions()
